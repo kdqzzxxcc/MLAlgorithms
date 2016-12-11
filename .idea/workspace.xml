@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="adbbffca-9f2c-4cbf-831c-877fc5ab035e" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/mla/ensemble/pdart.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mla/ensemble/dart.py" afterPath="$PROJECT_DIR$/mla/ensemble/dart.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mla/ensemble/pdart.py" afterPath="$PROJECT_DIR$/mla/ensemble/pdart.py" />
     </list>
     <ignored path="MLAlgorithms.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -29,10 +27,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="dart.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="dart.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/mla/ensemble/dart.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5420054" vertical-offset="75" max-vertical-offset="2750">
+            <state vertical-scroll-proportion="0.0" vertical-offset="75" max-vertical-offset="2750">
               <caret line="11" column="53" selection-start-line="11" selection-start-column="53" selection-end-line="11" selection-end-column="53" />
               <folding>
                 <element signature="e#34#80#0" expanded="true" />
@@ -41,11 +39,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="pdart.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="pdart.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/mla/ensemble/pdart.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="81" max-vertical-offset="2800">
-              <caret line="11" column="53" selection-start-line="11" selection-start-column="53" selection-end-line="11" selection-end-column="53" />
+            <state vertical-scroll-proportion="7.113821" vertical-offset="0" max-vertical-offset="2800">
+              <caret line="105" column="34" selection-start-line="105" selection-start-column="34" selection-end-line="105" selection-end-column="34" />
               <folding>
                 <element signature="e#34#80#0" expanded="true" />
               </folding>
@@ -142,8 +140,8 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/mla/ensemble/gbm.py" />
-        <option value="$PROJECT_DIR$/mla/ensemble/pdart.py" />
         <option value="$PROJECT_DIR$/mla/ensemble/dart.py" />
+        <option value="$PROJECT_DIR$/mla/ensemble/pdart.py" />
       </list>
     </option>
   </component>
@@ -451,9 +449,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mla/ensemble/pdart.py">
+    <entry file="file://$PROJECT_DIR$/mla/ensemble/dart.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="81" max-vertical-offset="2800">
+        <state vertical-scroll-proportion="0.0" vertical-offset="75" max-vertical-offset="2750">
           <caret line="11" column="53" selection-start-line="11" selection-start-column="53" selection-end-line="11" selection-end-column="53" />
           <folding>
             <element signature="e#34#80#0" expanded="true" />
@@ -461,10 +459,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mla/ensemble/dart.py">
+    <entry file="file://$PROJECT_DIR$/mla/ensemble/pdart.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5420054" vertical-offset="75" max-vertical-offset="2750">
-          <caret line="11" column="53" selection-start-line="11" selection-start-column="53" selection-end-line="11" selection-end-column="53" />
+        <state vertical-scroll-proportion="7.113821" vertical-offset="0" max-vertical-offset="2800">
+          <caret line="105" column="34" selection-start-line="105" selection-start-column="34" selection-end-line="105" selection-end-column="34" />
           <folding>
             <element signature="e#34#80#0" expanded="true" />
           </folding>

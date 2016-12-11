@@ -8,7 +8,7 @@ from mla.base import BaseEstimator
 from mla.ensemble.base import mse_criterion
 from mla.ensemble.tree import Tree
 
-class DARTBase(BaseEstimator):
+class pDARTBase(BaseEstimator):
     def __init__(self, n_estimators, learning_rate=1., max_features=None, max_depth=2, min_samples_split=10, p=0.1):
         self.min_samples_split = min_samples_split
         self.learning_rate = learning_rate
@@ -93,15 +93,15 @@ class DARTBase(BaseEstimator):
         return self.loss.transform(self._predict(X))
 
 
-class DARTRegressor(DARTBase):
+class pDARTRegressor(pDARTBase):
     def fit(self, X, y=None):
         self.loss = LeastSquaresLoss()
-        super(DARTRegressor, self).fit(X, y)
+        super(pDARTRegressor, self).fit(X, y)
 
 
-class DARTClassifier(DARTBase):
+class pDARTClassifier(pDARTBase):
     def fit(self, X, y=None):
         # Convert labels from {0, 1} to {-1, 1}
         y = (y * 2) - 1
         self.loss = LogisticLoss()
-        super(DARTClassifier, self).fit(X, y)
+        super(pDARTClassifier, self).fit(X, y)
