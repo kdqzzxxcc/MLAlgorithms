@@ -28,6 +28,9 @@ class Loss:
     def hess(self, actual, predicted):
         """Second order gradient."""
         raise NotImplementedError()
+    def error(self, actual, predicted):
+        """Total error between actual and predicted"""
+        raise NotImplementedError()
 
     def approximate(self, actual, predicted):
         """Approximate leaf value."""
@@ -46,6 +49,8 @@ class Loss:
 
 class LeastSquaresLoss(Loss):
     """Least squares loss"""
+    def error(self, actual, predicted):
+        return np.mean((actual - predicted) ** 2)
 
     def grad(self, actual, predicted):
         return actual - predicted
@@ -56,6 +61,8 @@ class LeastSquaresLoss(Loss):
 
 class LogisticLoss(Loss):
     """Logistic loss."""
+    def error(self, actual, predicted):
+        return np.sum(actual == predicted, dtype=float) / actual.shape[0]
 
     def grad(self, actual, predicted):
         return actual * expit(-actual * predicted)
