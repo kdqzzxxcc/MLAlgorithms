@@ -33,9 +33,11 @@ class DARTBase(BaseEstimator):
         if len(self.trees) == 0:
             return y_pred, []
         # drop trees from uniform sampling with probability self.p
+        rank = np.fabs(self.rank).argsort().argsort() + 1
         for i, tree in enumerate(self.trees):
             rand = np.random.uniform(0, 1)
-            if rand < self.p:
+            # p_{i} = 1 / rank
+            if rand < 1. / rank[i]:
                 drop_tree.append(i)
             else:
                 y_pred += self.weight[i] * self.raw_y_pred[i]
