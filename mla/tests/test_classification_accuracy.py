@@ -1,7 +1,10 @@
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import classification
+from sklearn.ensemble import GradientBoostingClassifier as SKGBC
 
 from mla.ensemble import RandomForestClassifier
 from mla.ensemble.gbm import GradientBoostingClassifier
+from mla.ensemble.dart import DARTClassifier
 from mla.knn import KNNClassifier
 from mla.linear_models import LogisticRegression
 from mla.metrics import accuracy
@@ -22,8 +25,13 @@ except ImportError:
     from sklearn.cross_validation import train_test_split
 from sklearn.datasets import make_classification
 
+import time
+
+
+
+
 # Generate a random regression problem
-X, y = make_classification(n_samples=750, n_features=10,
+X, y = make_classification(n_samples=75000, n_features=100,
                            n_informative=8, random_state=1111,
                            n_classes=2, class_sep=2.5, n_redundant=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.12,
@@ -84,12 +92,33 @@ def test_mlp():
 
 
 def test_gbm():
-    model = GradientBoostingClassifier(n_estimators=25, max_depth=3,
-                                       max_features=5, learning_rate=0.1)
+    model = GradientBoostingClassifier(n_estimators=20, max_depth=3,
+                                       max_features=10, learning_rate=0.1)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
+    mask = predictions > 0.5
+    predictions[mask] = 1
+    predictions[~mask] = 0
+    print classification.accuracy_score(y_test, predictions)
     assert roc_auc_score(y_test, predictions) >= 0.95
 
+@get_time
+def test_skgbm():
+    model = SKGBC(n_estimators=200, max_depth=3, max_features=None, learning_rate=0.1)
+    model.fit(X_train, y_train)
+    predictions = model.predict(X_test)
+    print classification.accuracy_score(y_test, predictions)
+
+@get_time
+def test_dart():
+    model = DARTClassifier(n_estimators=200, max_depth=3, max_features=None, p=0.01)
+    model.fit(X_train, y_train)
+    predictions = model.predict(X_test)
+    mask = predictions > 0.5
+    predictions[mask] = 1
+    predictions[~mask] = 0
+    print classification.accuracy_score(y_test, predictions)
+    assert roc_auc_score(y_test, predictions) >= 0.95
 
 def test_naive_bayes():
     model = NaiveBayesClassifier()
@@ -104,3 +133,9 @@ def test_knn():
     clf.fit(X_train, y_train)
     predictions = clf.predict(X_test)
     assert accuracy(y_test, predictions) >= 0.95
+
+# test_gbm()
+
+# test_skgbm()
+
+# test_dart()

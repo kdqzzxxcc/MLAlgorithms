@@ -62,7 +62,7 @@ class LeastSquaresLoss(Loss):
 class LogisticLoss(Loss):
     """Logistic loss."""
     def error(self, actual, predicted):
-        return np.sum(actual == predicted, dtype=float) / actual.shape[0]
+        return np.mean(actual == predicted)
 
     def grad(self, actual, predicted):
         return actual * expit(-actual * predicted)
