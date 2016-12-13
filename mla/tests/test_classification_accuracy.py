@@ -102,14 +102,12 @@ def test_gbm():
     print classification.accuracy_score(y_test, predictions)
     assert roc_auc_score(y_test, predictions) >= 0.95
 
-@get_time
 def test_skgbm():
     model = SKGBC(n_estimators=200, max_depth=3, max_features=None, learning_rate=0.1)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
     print classification.accuracy_score(y_test, predictions)
 
-@get_time
 def test_dart():
     model = DARTClassifier(n_estimators=200, max_depth=3, max_features=None, p=0.01)
     model.fit(X_train, y_train)
