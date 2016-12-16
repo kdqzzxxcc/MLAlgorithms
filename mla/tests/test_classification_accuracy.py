@@ -37,7 +37,6 @@ X, y = make_classification(n_samples=75000, n_features=100,
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.12,
                                                     random_state=1111)
 
-
 # All classifiers except convnet, RNN, LSTM.
 
 def test_linear_model():

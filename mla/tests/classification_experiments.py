@@ -2,15 +2,15 @@
 __author__ = 'kdq'
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import classification, regression
-from sklearn.ensemble import GradientBoostingRegressor as SKGBR
-from sklearn.ensemble import RandomForestRegressor as SKRF
+from sklearn.ensemble import GradientBoostingClassifier as SKGBC
+from sklearn.ensemble import RandomForestClassifier as SKRFC
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.model_selection import KFold
 
 from mla.ensemble import RandomForestClassifier, RandomForestRegressor
 from mla.ensemble.gbm import GradientBoostingClassifier, GradientBoostingRegressor
 from mla.ensemble.dart import DARTClassifier, DARTRegressor
-from mla.ensemble.pdart import pDARTRegressor
+from mla.ensemble.pdart import pDARTRegressor, pDARTClassifier
 
 import xgboost as xgb
 
@@ -30,23 +30,23 @@ def get_time(f):
 
 
 @get_time
-def test_skgbr(X_train, y_train, X_test, y_test):
-    model = SKGBR(n_estimators=1000, max_depth=5, max_features=0.2, learning_rate=0.05, max_leaf_nodes=50)
+def test_skgbc(X_train, y_train, X_test, y_test):
+    model = SKGBC(n_estimators=250, max_depth=5, max_features=None, learning_rate=0.3, max_leaf_nodes=40)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
-    mse = regression.mean_squared_error(y_test, predictions)
-    # print np.sum((y_test - predictions) ** 2)
-    print 'mse:{}'.format(mse)
-    return mse
+    acc = classification.accuracy_score(y_test, predictions)
+    print 'acc:{}'.format(acc)
+    return acc
+
 
 @get_time
-def test_skrf(X_train, y_train, X_test, y_test):
-    model = SKRF(n_estimators=1000, max_depth=5, max_features=0.4, max_leaf_nodes=1000, n_jobs=-1, bootstrap=True)
+def test_skrfc(X_train, y_train, X_test, y_test):
+    model = SKRFC(n_estimators=500, max_depth=5, max_features=None, max_leaf_nodes=1000, n_jobs=-1, bootstrap=True)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
-    mse = regression.mean_squared_error(y_test, predictions)
-    print 'mse:{}'.format(mse)
-    return mse
+    acc = classification.accuracy_score(y_test, predictions)
+    print 'acc:{}'.format(acc)
+    return acc
 
 @get_time
 def test_gbr(X_train, y_train, X_test, y_test):
@@ -69,21 +69,23 @@ def test_rf(X_train, y_train, X_test, y_test):
 
 @get_time
 def test_dart(X_train, y_train, X_test, y_test):
-    model = DARTRegressor(n_estimators=1000, max_depth=5, max_features=0.4, max_leaf_nodes=50, p=0.01)
+    model = DARTClassifier(n_estimators=250, max_depth=5, max_features=None, max_leaf_nodes=40, p=0.01)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
-    mse = regression.mean_squared_error(y_test, predictions)
-    print 'mse:{}'.format(mse)
-    return mse
+    acc = classification.accuracy_score(y_test, predictions)
+    print 'acc:{}'.format(acc)
+    return acc
+
 
 @get_time
 def test_pdart(X_train, y_train, X_test, y_test):
-    model = pDARTRegressor(n_estimators=100, max_features=0.4, max_depth=5, max_leaf_nodes=50)
+    model = pDARTClassifier(n_estimators=250, max_features=None, max_depth=5, max_leaf_nodes=40)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
-    mse = regression.mean_squared_error(y_test, predictions)
-    print 'mse:{}'.format(mse)
-    return mse
+    acc = classification.accuracy_score(y_test, predictions)
+    print 'acc:{}'.format(acc)
+    return acc
+
 
 def test_xgbgbr(X_train, y_train, X_test, y_test):
     model = xgb.XGBRegressor(max_depth=5, learning_rate=0.05, n_estimators=1000, objective='reg:linear', nthread=-1)
@@ -102,10 +104,21 @@ def test_xgbdart(X_train, y_train, X_test, y_test):
     clf = xgb.train(params=param, dtrain=dtrain, num_boost_round=50)
 
 
-data = pd.read_csv('~/datasets/slice_data/slice_localization_data.csv')
-print data.info()
-idx = data.patientId.unique().tolist()
-kf = KFold(n_splits=10)
+# data = pd.read_csv('~/datasets/slice_data/slice_localization_data.csv')
+# print data.info()
+# idx = data.patientId.unique().tolist()
+# kf = KFold(n_splits=10)
+
+train = np.fromfile('/home/ilab/datasets/fd/fd_train.dat', dtype='uint8')
+label = pd.read_csv('/home/ilab/datasets/fd/fd_train.lab', header=None).values
+label[label < 0] = 0
+label = label.reshape((label.shape[0], ))
+train = train.reshape((train.shape[0] / 900, 900))
+
+X_train = train[:300000]
+y_train = label[:300000]
+X_test = train[300000:500000]
+y_test = label[300000:500000]
 
 skgbr_mse = []
 skrf_mse = []
@@ -113,36 +126,11 @@ dart_mse = []
 pdart_mse = []
 
 
-def parallel_skrf(X_train, y_train, X_test, y_test):
-    n_estimators = [50, 100, 250, 500, 1000]
-    max_features = [0.01, 0.025, 0.05, 0.1, 0.2, 0.4, 0.5, 0.8, None]
-    max_leaf_node = [25, 50, 100, 250, 500, 1000]
-    max_depth = 5
-    criterion = 'mse'
-
-
-
 print('start experiment :{}'.format(time.ctime()))
 
-for k, (train_idx, test_idx) in enumerate(kf.split(idx)):
-    print('K-fold:{}'.format(k))
-    t1 = time.time()
-    train = data[data['patientId'].isin(train_idx)]
-    test = data[data['patientId'].isin(test_idx)]
-    X_train = train.drop(['patientId', 'reference'], axis=1)
-    y_train = train['reference']
-    X_test = test.drop(['patientId', 'reference'], axis=1)
-    y_test = test['reference']
-    print('get data ready:{}'.format(time.time() - t1))
-
-    # skrf_mse.append(test_skrf(X_train, y_train, X_test, y_test))
-    # skgbr_mse.append(test_skgbr(X_train, y_train, X_test, y_test))
-    # dart_mse.append(test_dart(X_train, y_train, X_test, y_test))
-    pdart_mse.append(test_pdart(X_train, y_train, X_test, y_test))
-
-print('mse skgbr:{}'.format(np.mean(skgbr_mse)))
-print('mse skrf:{}'.format(np.mean(skrf_mse)))
-print('mse dart:{}'.format(np.mean(dart_mse)))
-print('mse pdart:{}'.format(np.mean(pdart_mse)))
+test_skrfc(X_train, y_train, X_test, y_test)
+test_skgbc(X_train, y_train, X_test, y_test)
+test_dart(X_train, y_train, X_test, y_test)
+test_pdart(X_train, y_train, X_test, y_test)
 
 print('end experiment :{}'.format(time.ctime()))

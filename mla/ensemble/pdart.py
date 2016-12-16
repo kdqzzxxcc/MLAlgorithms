@@ -9,6 +9,7 @@ from mla.ensemble.base import mse_criterion
 from mla.ensemble.tree import Tree
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 import random
+from matplotlib import pyplot as plt
 random.seed(1234)
 
 class pDARTBase(BaseEstimator):
@@ -44,6 +45,12 @@ class pDARTBase(BaseEstimator):
         self._setup_input(X, y)
         self.y_mean = np.mean(y)
         self._train()
+
+    def plot(self, X):
+        x = range(len(X))
+        plt.figure(1)
+        plt.plot(x, X)
+        plt.show()
 
     def sample(self):
         drop_tree = []
@@ -103,6 +110,7 @@ class pDARTBase(BaseEstimator):
             self.weight.append(self.learning_rate / (l + 1))
             for idx in drop_tree:
                 self.weight[idx] *= 1.0 * l / (l + 1)
+        # self.plot(self.rank)
 
     def _predict(self, X=None):
         y_pred = np.zeros(X.shape[0], np.float32)
