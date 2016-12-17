@@ -91,7 +91,7 @@ def test_xgbgbr(X_train, y_train, X_test, y_test):
 def test_xgbdart(X_train, y_train, X_test, y_test):
     param = {
         'booster': 'dart',
-         'max_depth': 5, 'learning_rate': 0.1,
+         'max_depth': 5, 'learning_rate': 1,
          'objective': 'reg:linear', 'silent': False,
          'sample_type': 'uniform',
          'normalize_type': 'tree',
@@ -100,6 +100,7 @@ def test_xgbdart(X_train, y_train, X_test, y_test):
     }
     dtrain = xgb.DMatrix(data=X_train, label=y_train)
     clf = xgb.train(params=param, dtrain=dtrain, num_boost_round=50)
+    model = xgb.XGBRegressor(max_depth=5, n_estimators=100)
 
 
 data = pd.read_csv('~/datasets/slice_data/slice_localization_data.csv')
