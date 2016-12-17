@@ -143,6 +143,21 @@ def parallel_classification(parameters):
     f.handle.write('{}\n'.format(acc))
     f.release()
 
+def parameters_recover(parameters, model_name):
+    already_parameters = []
+    with open('/home/ilab/pdart_experiments/classification_{}.csv'.format(model_name)) as f:
+        for line in f:
+            tmp = line.strip().split(',')
+            tmp = tmp[:-1]
+            d = {'model':model_name}
+            for k in tmp:
+                k = k.split(':')
+                d[k[0]] = k[1]
+            already_parameters.append(d)
+    for p in already_parameters:
+        if p in parameters:
+            parameters.remove(p)
+
 cores = cpu_count()
 train = np.fromfile('/home/ilab/datasets/fd/fd_train.dat', dtype='uint8')
 label = pd.read_csv('/home/ilab/datasets/fd/fd_train.lab', header=None).values
@@ -186,6 +201,11 @@ for n_tree in [50, 100, 250, 500, 1000]:
     for max_f in [0.5, 0.75, None]:
         d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': 40, 'max_features': max_f, 'model': 'PDART'}
         pdart_parameters.append(d)
+
+parameters_recover(gbdt_parameters, 'GBRT')
+parameters_recover(rf_parameters, 'RF')
+parameters_recover(dart_parameters, 'DART')
+parameters_recover(pdart_parameters, 'PDART')
 
 model_map = {'RF': SKRFC, 'GBRT': SKGBC, 'DART': DARTClassifier, 'PDART':pDARTClassifier}
 
