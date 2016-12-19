@@ -13,11 +13,11 @@ from mla.ensemble.dart import DARTClassifier, DARTRegressor
 from mla.ensemble.pdart import pDARTRegressor, pDARTClassifier
 
 import xgboost as xgb
-
 import pandas as pd
 import numpy as np
-import time
 
+import time
+import os
 import fcntl
 from multiprocessing import Process, Pool, cpu_count
 import itertools
@@ -143,20 +143,30 @@ def parallel_classification(parameters):
     f.handle.write('{}\n'.format(acc))
     f.release()
 
+def change_value(x):
+    if x == 'None':
+        return None
+    if x.count('.'):
+        return float(x)
+    return int(x)
+
 def parameters_recover(parameters, model_name):
     already_parameters = []
-    with open('/home/ilab/pdart_experiments/classification_{}.csv'.format(model_name)) as f:
-        for line in f:
-            tmp = line.strip().split(',')
-            tmp = tmp[:-1]
-            d = {'model':model_name}
-            for k in tmp:
-                k = k.split(':')
-                d[k[0]] = k[1]
-            already_parameters.append(d)
+    if os.path.exists('/home/ilab/pdart_experiments/classification_{}.csv'.format(model_name)):
+        with open('/home/ilab/pdart_experiments/classification_{}.csv'.format(model_name)) as f:
+            for line in f:
+                tmp = line.strip().split(',')
+                tmp = tmp[:-1]
+                d = {'model':model_name}
+                for k in tmp:
+                    k = k.split(':')
+                    d[k[0]] = change_value(k[1])
+                already_parameters.append(d)
     for p in already_parameters:
         if p in parameters:
             parameters.remove(p)
+    print('======parameter train exist============')
+    print('Model: {}, Parameters: {}'.format(model_name, len(parameters)))
 
 cores = cpu_count()
 train = np.fromfile('/home/ilab/datasets/fd/fd_train.dat', dtype='uint8')
@@ -209,21 +219,7 @@ parameters_recover(pdart_parameters, 'PDART')
 
 model_map = {'RF': SKRFC, 'GBRT': SKGBC, 'DART': DARTClassifier, 'PDART':pDARTClassifier}
 
-pool = Pool(cores / 2)
+pool = Pool(cores)
 print('start experiment :{}'.format(time.ctime()))
 pool.map(parallel_classification, gbdt_parameters)
-
 print('end experiment :{}'.format(time.ctime()))
-
-
-# def time_out(x):
-#     print x
-#     return x
-# pool = Pool(4)
-# res = pool.map(time_out, [{'a':1}, {'b':2}])
-# print res
-
-# Usagetry:
-# lock = Lock("./test")
-# lock.acquire()	# Do important stuff that needs to be synchronizedfinally:
-# lock.release()
