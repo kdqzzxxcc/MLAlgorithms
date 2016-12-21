@@ -1,6 +1,6 @@
 # coding=utf-8
 __author__ = 'kdq'
-from gbm import LeastSquaresLoss, LogisticLoss
+from gbm import LeastSquaresLoss, LogisticLoss, PairwiseLoss
 import numpy as np
 # logistic function
 from scipy.special import expit
@@ -10,6 +10,9 @@ from mla.ensemble.tree import Tree
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 import random
 from matplotlib import pyplot as plt
+import sklearn
+import scipy
+from NDCG import *
 random.seed(1234)
 
 class pDARTBase(BaseEstimator):
@@ -95,7 +98,7 @@ class pDARTBase(BaseEstimator):
             }
             # tree.train(self.X, targets, max_features=self.max_features,
             #            min_samples_split=self.min_samples_split, max_depth=self.max_depth, loss=self.loss)
-            tree = DecisionTreeRegressor(criterion='mse', splitter="best", max_depth=self.max_depth,
+            tree = DecisionTreeRegressor(criterion='friedman_mse', splitter="best", max_depth=self.max_depth,
                                          min_samples_split=self.min_samples_split, max_features=self.max_features,
                                          min_samples_leaf=self.min_samples_leaf, max_leaf_nodes=self.max_leaf_nodes)
             tree.fit(self.X, residuals)
@@ -135,3 +138,140 @@ class pDARTClassifier(pDARTBase):
         y = (y * 2) - 1
         self.loss = LogisticLoss()
         super(pDARTClassifier, self).fit(X, y)
+
+
+class pDARTRanker(pDARTBase):
+    def _setup_input(self, X, y=None, qids=None):
+        if not isinstance(X, np.ndarray):
+            X = np.array(X)
+
+        if X.size == 0:
+            raise ValueError('Number of features must be > 0')
+
+        if X.ndim == 1:
+            self.n_samples, self.n_features = 1, X.shape
+        else:
+            self.n_samples, self.n_features = X.shape[0], np.prod(X.shape[1:])
+
+        self.X = X
+
+        if self.y_required:
+            if y is None:
+                raise ValueError('Missed required argument y')
+
+            if not isinstance(y, np.ndarray):
+                y = np.array(y)
+
+            if y.size == 0:
+                raise ValueError('Number of targets must be > 0')
+
+        self.y = y
+
+        # qid, a, b: qid, start of qid, end of qid
+        self.qids = {}
+        pre_qid = qids[0]
+        pre_idx = 0
+        for idx, qid in enumerate(qids):
+            if pre_qid != 0 and pre_qid != qid:
+                self.qids[pre_qid] = (pre_qid, pre_idx, idx + 1)
+                pre_idx = idx
+                pre_qid = qid
+        self.qids[pre_qid] = (pre_qid, pre_idx, len(qids) + 1)
+
+    def _update_terminal_regions(self, tree, X, y, lambdas, deltas):
+        terminal_regions = tree.apply(X)
+        masked_terminal_regions = terminal_regions.copy()
+
+        # no subsample, so no mask
+        # masked_terminal_regions[~sample_mask] = -1
+
+        for leaf in np.where(tree.children_left ==
+                                     sklearn.tree._tree.TREE_LEAF)[0]:
+            terminal_region = np.where(masked_terminal_regions == leaf)
+            suml = np.sum(lambdas[terminal_region])
+            sumd = np.sum(deltas[terminal_region])
+            tree.value[leaf, 0, 0] = 0.0 if sumd == 0.0 else (suml / sumd)
+
+            # y_pred += tree.value[terminal_regions, 0, 0] * self.learning_rate
+
+    def _calc_lambdas_deltas(self, qid, y, y_pred, idcg):
+        ns = y.shape[0]
+        lambdas = np.zeros(ns)
+        deltas = np.zeros(ns)
+
+        sorted_y_pred = np.argsort(y_pred)[::-1]
+        rev_sorted_y_pred = np.argsort(sorted_y_pred)
+        actual = y[sorted_y_pred]
+        pred = y_pred[sorted_y_pred]
+
+        dcgs = {}
+
+        for i in xrange(ns):
+            dcgs[(i, i)] = single_dcg(actual, i, i)
+            for j in xrange(i + 1, ns):
+                if actual[i] == actual[j]:
+                    continue
+                dcgs[(i, j)] = single_dcg(actual, i, j)
+                dcgs[(j, i)] = single_dcg(actual, j, i)
+
+        for i in xrange(ns):
+            for j in xrange(i + 1, ns):
+                if actual[i] == actual[j]:
+                    continue
+
+                deltas_ndcg = np.abs(dcgs[(i, j)] + dcgs[(j, i)] - dcgs[(i, i)] - dcgs[(j, j)])
+
+                if actual[i] < actual[j]:
+                    logistic = scipy.special.expit(pred[i] - pred[j])
+                    l = logistic * deltas_ndcg
+                    lambdas[i] -= l
+                    lambdas[j] += l
+                else:
+                    logistic = scipy.special.expit(pred[j] - pred[i])
+                    l = logistic * -deltas_ndcg
+                    lambdas[i] += l
+                    lambdas[j] -= l
+                gradient = (1 - logistic) * l
+                deltas[i] += gradient
+                deltas[j] += gradient
+
+        return lambdas[rev_sorted_y_pred], deltas[rev_sorted_y_pred]
+
+    def fit(self, X, y=None, qids=None):
+        self.loss = PairwiseLoss()
+        self._setup_input(X, y, qids)
+        self._train()
+
+    def _train(self):
+        all_lambdas = np.zeros(self.n_samples, np.float32)
+        all_deltas = np.zeros(self.n_samples, np.float32)
+        idcgs = {}
+        for qid, a, b in self.qids.values():
+            idcgs[qid] = idcg(self.y[a:b])
+        # sample_mask = np.zeros(self.n_samples, dtype=np.bool)
+        for n in range(self.n_estimators):
+            # calculate lambdas & deltas
+            y_pred, drop_tree = self.sample()
+            for qid, a, b in self.qids.values():
+                lambdas, deltas = self._calc_lambdas_deltas(qid, self.y[a:b], y_pred[a:b], idcgs[qid])
+                all_lambdas[a:b] = lambdas
+                all_deltas[a:b] = deltas
+
+            tree = DecisionTreeRegressor(criterion='friedman_mse', splitter="best", max_depth=self.max_depth,
+                                         min_samples_split=self.min_samples_split, max_features=self.max_features,
+                                         min_samples_leaf=self.min_samples_leaf, max_leaf_nodes=self.max_leaf_nodes)
+
+            tree.fit(self.X, all_lambdas)
+            self._update_terminal_regions(tree.tree_, self.X, self.y, all_lambdas, all_deltas)
+
+            predictions = tree.predict(self.X)
+
+            error = -self.loss.error(self.y, predictions, self.qids)
+            self.raw_y_pred.append(predictions)
+            self.trees.append(tree)
+            self.rank.append(error)
+            # rewrite weight
+            l = len(drop_tree)
+            self.weight.append(self.learning_rate / (l + 1))
+            for idx in drop_tree:
+                self.weight[idx] *= 1.0 * l / (l + 1)

@@ -1,10 +1,12 @@
 import numpy as np
 # logistic function
+from sklearn.metrics import ranking
 from scipy.special import expit
-
 from mla.base import BaseEstimator
 from mla.ensemble.base import mse_criterion
 from mla.ensemble.tree import Tree
+
+from NDCG import *
 
 """
 References:
@@ -13,6 +15,7 @@ http://www.saedsayad.com/docs/xgboost.pdf
 https://homes.cs.washington.edu/~tqchen/pdf/BoostedTree.pdf
 http://stats.stackexchange.com/questions/202858/loss-function-approximation-with-taylor-expansion
 """
+
 
 
 class Loss:
@@ -58,6 +61,22 @@ class LeastSquaresLoss(Loss):
     def hess(self, actual, predicted):
         return np.ones_like(actual)
 
+
+class PairwiseLoss(Loss):
+    """Pairwise loss (lambda mart-like)"""
+    @classmethod
+    def error(self, actual, predicted, qids=None):
+        assert qids != None
+        N = []
+        for qid, a, b in qids.values():
+            N.append(ndcg(actual[a:b], predicted[a:b]))
+        return np.mean(N)
+        
+    def grad(self, actual, predicted):
+        pass
+
+    def hess(self, actual, predicted):
+        pass
 
 class LogisticLoss(Loss):
     """Logistic loss."""
@@ -140,3 +159,8 @@ class GradientBoostingClassifier(GradientBoosting):
         y = (y * 2) - 1
         self.loss = LogisticLoss()
         super(GradientBoostingClassifier, self).fit(X, y)
+
+class LambdaMART(GradientBoosting):
+    def fit(self, X, y=None):
+        self.loss = PairwiseLoss()
+        super(LambdaMART, self).fit(X, y)

@@ -186,28 +186,28 @@ dart_parameters = []
 pdart_parameters = []
 
 # build gbdt parameters
-for n_tree in [50, 100, 250, 500, 1000]:
+for n_tree in [50, 100, 250, 500, 1000, 1500, 2000]:
     for lr in [0.2, 0.3, 0.4, 0.5]:
         for max_f in [0.5, 0.75, None]:
             d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': 40, 'learning_rate': lr, 'max_features': max_f, 'model': 'GBRT'}
             gbdt_parameters.append(d)
 
 # build rf parameters
-for n_tree in [50, 100, 250, 500, 1000]:
+for n_tree in [50, 100, 250, 500, 1000, 1500, 2000]:
     for max_n in [50, 100, 250, 1000]:
         for max_f in [0.5, 0.75, None]:
             d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': max_n, 'max_features': max_f, 'model': 'RF'}
             rf_parameters.append(d)
 
 # build dart parameters
-for n_tree in [50, 100, 250, 500, 1000]:
+for n_tree in [50, 100, 250, 500, 1000, 1500, 2000]:
     for p in [0, 0.015, 0.03, 0.045]:
         for max_f in [0.5, 0.75, None]:
             d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': 40, 'p': p, 'max_features': max_f, 'model': 'DART'}
             dart_parameters.append(d)
 
 # build pdart parameters
-for n_tree in [50, 100, 250, 500, 1000]:
+for n_tree in [50, 100, 250, 500, 1000, 1500, 2000]:
     for max_f in [0.5, 0.75, None]:
         d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': 40, 'max_features': max_f, 'model': 'PDART'}
         pdart_parameters.append(d)
@@ -221,5 +221,6 @@ model_map = {'RF': SKRFC, 'GBRT': SKGBC, 'DART': DARTClassifier, 'PDART':pDARTCl
 
 pool = Pool(cores)
 print('start experiment :{}'.format(time.ctime()))
-pool.map(parallel_classification, gbdt_parameters)
+pool.map(parallel_classification, rf_parameters)
 print('end experiment :{}'.format(time.ctime()))
+from sklearn import ensemble
