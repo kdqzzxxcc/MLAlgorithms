@@ -65,11 +65,13 @@ class LeastSquaresLoss(Loss):
 class PairwiseLoss(Loss):
     """Pairwise loss (lambda mart-like)"""
     @classmethod
-    def error(self, actual, predicted, qids=None):
+    def error(self, actual, predicted, qids=None, k=None):
         assert qids != None
         N = []
         for qid, a, b in qids.values():
-            N.append(ndcg(actual[a:b], predicted[a:b]))
+            if np.sum(actual[a:b]) == 0:
+                continue
+            N.append(ndcg(actual[a:b], predicted[a:b], b - a if k == None else k))
         return np.mean(N)
         
     def grad(self, actual, predicted):

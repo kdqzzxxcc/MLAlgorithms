@@ -6,15 +6,13 @@ def dcg(scores):
     return np.sum([(np.power(2, scores[i]) - 1) / np.log2(i + 2) for i in xrange(len(scores))])
 
 def idcg(scores):
-    scores = [score for score in sorted(scores)[::-1]]
-    return dcg(scores)
+    return dcg(sorted(scores, reverse=True))
 
 def dcg_k(scores, k=3):
     return np.sum([(np.power(2, scores[i]) - 1) / np.log2(i + 2) for i in xrange(len(scores[:k]))])
 
 def idcg_k(scores, k=3):
-    scores = [score for score in sorted(scores)[::-1]]
-    return dcg_k(scores, k)
+    return dcg_k(sorted(scores, reverse=True), k)
 
 def single_dcg(scores, i, j):
     '''
@@ -27,4 +25,5 @@ def ndcg(y, y_pred, k=3):
     sorted_pred = np.argsort(y_pred)[::-1]
     sorted_pred = sorted_pred[:k]
     dcg_ = dcg_k(y[sorted_pred], k)
-    return dcg_ / idcg_y
+    return dcg_ / max(idcg_y, 1)
+
