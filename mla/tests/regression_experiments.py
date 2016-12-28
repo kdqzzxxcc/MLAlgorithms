@@ -162,7 +162,6 @@ class Lock:
 def parallel_regression(parameters):
     model_name = parameters['model']
     parameters.pop('model')
-    model = model_map[model_name](**parameters)
     acc = []
     for k, (train_idx, test_idx) in enumerate(kf.split(idx)):
         # t1 = time.time()
@@ -172,6 +171,7 @@ def parallel_regression(parameters):
         y_train = train['reference']
         X_test = test.drop(['patientId', 'reference'], axis=1)
         y_test = test['reference']
+        model = model_map[model_name](**parameters)
         # print('get data ready:{}'.format(time.time() - t1))
         model.fit(X_train, y_train)
         predictions = model.predict(X_test)
@@ -214,34 +214,34 @@ dart_parameters = []
 pdart_parameters = []
 
 # build gbdt parameters
-for n_tree in [50, 100, 250, 500, 1000]:
-    for lr in [0.05, 0.1, 0.2, 0.3, 0.5]:
-        for max_f in [0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0]:
-            for max_leaf in [50, 100, 250, 500, 1000]:
+for n_tree in [1000]:
+    for lr in [0.05, 0.1, 0.2]:
+        for max_f in [0.05, 0.1, 0.2, 0.4]:
+            for max_leaf in [50]:
                 d = {
                     'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': max_leaf, 'learning_rate': lr,'max_features': max_f, 'model': 'GBRT'
                 }
                 gbdt_parameters.append(d)
 
 # build rf parameters
-for n_tree in [50, 100, 250, 500, 1000]:
-    for max_n in [50, 100, 250, 500, 1000]:
+for n_tree in [1000]:
+    for max_leaf in [50, 100, 250, 500, 1000]:
         for max_f in [0.01, 0.025, 0.05, 0.1, 0.2, 0.4, 0.5, 0.8, 1.0]:
-            d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': max_n, 'max_features': max_f, 'model': 'RF', 'n_jobs':-1}
+            d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': max_leaf, 'max_features': max_f, 'model': 'RF', 'n_jobs':-1}
             rf_parameters.append(d)
 
 # build dart parameters
-for n_tree in [50, 100, 250, 500, 1000]:
+for n_tree in [1000]:
     for p in [0, 0.01, 0.025, 0.05, 0.1, 0.2]:
         for max_f in [0.05, 0.1, 0.2, 0.4, 0.8, 1.0]:
-            for max_leaf in [50, 100, 250, 500, 1000]:
+            for max_leaf in [50]:
                 d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': max_leaf, 'p': p, 'max_features': max_f, 'model': 'DART'}
                 dart_parameters.append(d)
 
 # build pdart parameters
-for n_tree in [50, 100, 250, 500, 1000]:
+for n_tree in [1000]:
     for max_f in [0.05, 0.1, 0.2, 0.4, 0.8, 1.0]:
-        for max_leaf in [50, 100, 250, 500, 1000]:
+        for max_leaf in [100]:
             d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': max_leaf, 'max_features': max_f, 'model': 'PDART'}
             pdart_parameters.append(d)
 
@@ -254,9 +254,9 @@ model_map = {'RF': SKRF, 'GBRT': SKGBR, 'DART': DARTRegressor, 'PDART':pDARTRegr
 
 pool = Pool(8)
 print('start experiment :{}'.format(time.ctime()))
-pool.map(parallel_regression, gbdt_parameters)
-pool.map(parallel_regression, dart_parameters)
+# pool.map(parallel_regression, gbdt_parameters)
+# pool.map(parallel_regression, dart_parameters)
 pool.map(parallel_regression, pdart_parameters)
-pool.map(parallel_regression, rf_parameters)
+# pool.map(parallel_regression, rf_parameters)
 print('end experiment :{}'.format(time.ctime()))
 from sklearn import ensemble

@@ -5,6 +5,7 @@ from scipy.special import expit
 from mla.base import BaseEstimator
 from mla.ensemble.base import mse_criterion
 from mla.ensemble.tree import Tree
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from NDCG import *
 
@@ -100,8 +101,10 @@ class LogisticLoss(Loss):
 class GradientBoosting(BaseEstimator):
     """Gradient boosting trees with Taylor's expansion approximation (as in xgboost)."""
 
-    def __init__(self, n_estimators, learning_rate=0.1, max_features=10, max_depth=2, min_samples_split=10):
+    def __init__(self, n_estimators, learning_rate=0.1, max_features=10, max_depth=2, min_samples_split=10, min_samples_leaf=1, max_leaf_nodes=40):
         self.min_samples_split = min_samples_split
+        self.max_leaf_nodes = max_leaf_nodes
+        self.min_samples_leaf = min_samples_leaf
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.max_features = max_features
@@ -122,18 +125,23 @@ class GradientBoosting(BaseEstimator):
 
         for n in range(self.n_estimators):
             residuals = self.loss.grad(self.y, y_pred)
-            tree = Tree(regression=True, criterion=mse_criterion)
+            # tree = Tree(regression=True, criterion=mse_criterion)
             # Pass multiple target values to the tree learner
-            targets = {
-                # Residual values
-                'y': residuals,
-                # Actual target values
-                'actual': self.y,
-                # Predictions from previous step
-                'y_pred': y_pred
-            }
-            tree.train(self.X, targets, max_features=self.max_features,
-                       min_samples_split=self.min_samples_split, max_depth=self.max_depth, loss=self.loss)
+            # targets = {
+            #     # Residual values
+            #     'y': residuals,
+            #     # Actual target values
+            #     'actual': self.y,
+            #     # Predictions from previous step
+            #     'y_pred': y_pred
+            # }
+            print self.max_leaf_nodes
+            tree = DecisionTreeRegressor(criterion='friedman_mse', splitter="best", max_depth=self.max_depth,
+                                         min_samples_split=self.min_samples_split, max_features=self.max_features,
+                                         min_samples_leaf=self.min_samples_leaf, max_leaf_nodes=self.max_leaf_nodes)
+            tree.fit(self.X, residuals)
+            # tree.train(self.X, targets, max_features=self.max_features,
+            #            min_samples_split=self.min_samples_split, max_depth=self.max_depth, loss=self.loss)
             predictions = tree.predict(self.X)
             y_pred += self.learning_rate * predictions
             self.trees.append(tree)

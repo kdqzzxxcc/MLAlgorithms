@@ -189,7 +189,7 @@ pdart_parameters = []
 for n_tree in [50, 100, 250, 500, 1000, 1500, 2000]:
     for lr in [0.2, 0.3, 0.4, 0.5]:
         for max_f in [0.5, 0.75, None]:
-            d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': 40, 'learning_rate': lr, 'max_features': max_f, 'model': 'GBRT'}
+            d = {'n_estimators': n_tree, 'max_depth': 5, 'max_leaf_nodes': 40, 'learning_rate': lr, 'max_features': max_f, 'model': 'GBRT1'}
             gbdt_parameters.append(d)
 
 # build rf parameters
@@ -217,10 +217,12 @@ parameters_recover(rf_parameters, 'RF')
 parameters_recover(dart_parameters, 'DART')
 parameters_recover(pdart_parameters, 'PDART')
 
-model_map = {'RF': SKRFC, 'GBRT': SKGBC, 'DART': DARTClassifier, 'PDART':pDARTClassifier}
+model_map = {'RF': SKRFC, 'GBRT': SKGBC, 'DART': DARTClassifier, 'PDART':pDARTClassifier, 'GBRT1':GradientBoostingClassifier}
 
 pool = Pool(cores)
+gbdt_parameters = {'n_estimators': 50, 'max_depth': 5, 'max_leaf_nodes': 40, 'learning_rate': 0.2, 'max_features': 0.5, 'model': 'GBRT1'}
 print('start experiment :{}'.format(time.ctime()))
-pool.map(parallel_classification, rf_parameters)
+parallel_classification(**gbdt_parameters)
+# pool.map(parallel_classification, gbdt_parameters)
 print('end experiment :{}'.format(time.ctime()))
 from sklearn import ensemble

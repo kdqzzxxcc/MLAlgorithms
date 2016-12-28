@@ -207,7 +207,7 @@ y_test = np.array(y_test, dtype=np.float32)
 qids_test = np.array(qids_test, dtype=np.float32)
 
 print 'start at:{}'.format(time.ctime())
-parallel_ranking(pdart_parameters)
+# parallel_ranking(pdart_parameters)
 test_xgboost_ranking()
 print 'end at :{}'.format(time.ctime())
 
